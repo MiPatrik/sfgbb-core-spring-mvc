@@ -4,6 +4,7 @@ import guru.springframework.domain.User;
 import guru.springframework.repositories.CustomerRepository;
 import guru.springframework.repositories.UserRepository;
 import guru.springframework.services.UserService;
+import guru.springframework.services.security.EncryptionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,13 @@ public class UserServiceRepoImpl implements UserService {
         this.userRepository = userRepository;
     }
 
+    private EncryptionService encryptionService;
+
+    @Autowired
+    public void setEncryptionService(EncryptionService encryptionService) {
+        this.encryptionService = encryptionService;
+    }
+
     @Autowired
     public void setCustomerRepository(CustomerRepository customerRepository) {
         this.customerRepository = customerRepository;
@@ -46,6 +54,10 @@ public class UserServiceRepoImpl implements UserService {
 
     @Override
     public User saveOrUpdate(User domainObject) {
+
+        if(domainObject.getPassword() != null){
+            domainObject.setEncryptedPassword(encryptionService.encryptString(domainObject.getPassword()));
+        }
         return userRepository.save(domainObject);
     }
 
@@ -55,5 +67,10 @@ public class UserServiceRepoImpl implements UserService {
         User user = userRepository.findOne(id);
         customerRepository.delete(user.getCustomer());
         userRepository.delete(user);
+    }
+
+    @Override
+    public User findByUserName(String userName) {
+        return userRepository.findByUsername(userName);
     }
 }
